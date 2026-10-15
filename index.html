@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AETHER-QA // Autonomous Spatial Telemetry & Self-Healing QA Cloud</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Syne:wght@400..800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #05060b;
+      --bg-surface: rgba(16, 19, 32, 0.58);
+      --glass-border: rgba(255, 255, 255, 0.09);
+      --accent-cyan: #00f2fe;
+      --accent-violet: #8b5cf6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-crimson: #ff2a5f;
+      --brutal-yellow: #ffe600;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --parallax-x: 0px;
+      --parallax-y: 0px;
+      --font-weight-kinetic: 700;
+    }
+
+    /* Light/Brutalist High-Contrast Theme Override */
+    body.theme-brutal-light {
+      --bg-deep: #f4f1ea;
+      --bg-surface: rgba(255, 255, 255, 0.88);
+      --glass-border: #111111;
+      --text-main: #0a0a0a;
+      --text-muted: #4b5563;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+      transition: background-color 0.45s var(--ease-out-expo), color 0.3s ease;
+      perspective: 1400px;
+    }
+
+    /* ==========================================================================
+       1. AURORA + MESH GRADIENT + PARALLAX BACKGROUND LAYER
+       ========================================================================== */
+    .aurora-stage {
+      position: fixed;
+      inset: -10%;
+      z-index: -2;
+      pointer-events: none;
+      transform: translate3d(calc(var(--parallax-x) * -0.4), calc(var(--parallax-y) * -0.4), 0);
+      transition: transform 0.15s ease-out;
+      filter: blur(90px) saturate(160%);
+      opacity: 0.55;
+    }
+    .aurora-orb {
+      position: absolute;
+      border-radius: 50%;
+      animation: floatAurora 18s infinite alternate ease-in-out;
+    }
+    .orb-1 { width: 52vw; height: 52vw; background: radial-gradient(circle, #4f46e5, transparent 70%); top: -12%; left: -10%; }
+    .orb-2 { width: 45vw; height: 45vw; background: radial-gradient(circle, #00f2fe, transparent 70%); bottom: -15%; right: -5%; animation-delay: -5s; }
+    .orb-3 { width: 36vw; height: 36vw; background: radial-gradient(circle, #ec4899, transparent 70%); top: 30%; left: 38%; animation-delay: -11s; }
+
+    @keyframes floatAurora {
+      0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+      50% { transform: translate(60px, -40px) scale(1.12) rotate(12deg); }
+      100% { transform: translate(-40px, 50px) scale(0.94) rotate(-8deg); }
+    }
+
+    /* Interactive Particle & Spatial Grid Canvas */
+    #spatial-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* ==========================================================================
+       2. TOP TELEMETRY BAR (GLASSMORPHISM + VARIABLE FONT KINETIC TYPOGRAPHY)
+       ========================================================================== */
+    .topbar {
+      position: sticky;
+      top: 14px;
+      z-index: 100;
+      margin: 0 24px;
+      padding: 12px 22px;
+      border-radius: 18px;
+      background: rgba(12, 15, 26, 0.65);
+      backdrop-filter: blur(22px) saturate(180%);
+      -webkit-backdrop-filter: blur(22px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+      transition: all 0.35s var(--ease-out-expo);
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Gooey Liquid Metaball Status Indicator */
+    .gooey-container {
+      filter: url('#gooey-filter');
+      position: relative;
+      width: 44px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .goo-ball {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      animation: gooPulse 3.2s infinite ease-in-out;
+    }
+    .goo-ball:nth-child(2) {
+      background: var(--accent-emerald);
+      animation-direction: reverse;
+      animation-duration: 2.4s;
+    }
+    @keyframes gooPulse {
+      0%, 100% { transform: translateX(-8px) scale(0.95); }
+      50% { transform: translateX(8px) scale(1.15); }
+    }
+
+    /* Kinetic Variable Font Title + Video/Gradient Mask Clipping */
+    .kinetic-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.35rem;
+      font-weight: var(--font-weight-kinetic);
+      letter-spacing: -0.03em;
+      background: linear-gradient(90deg, #ffffff 0%, #00f2fe 45%, #a855f7 80%, #ffffff 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shineClip 5s linear infinite;
+      cursor: pointer;
+      transition: font-weight 0.2s ease, letter-spacing 0.25s var(--spring-bounce);
+    }
+    .kinetic-logo:hover {
+      letter-spacing: 0.06em;
+    }
+    @keyframes shineClip {
+      to { background-position: 200% center; }
+    }
+
+    .badge-sla {
+      position: relative;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.03));
+      border: 1px solid rgba(255,255,255,0.2);
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .badge-sla::after {
+      content: '';
+      position: absolute;
+      inset: -100%;
+      background: conic-gradient(from 0deg, transparent, rgba(0, 242, 254, 0.5), rgba(236, 72, 153, 0.5), transparent 60%);
+      animation: holoSpin 4s linear infinite;
+      mix-blend-mode: color-dodge;
+      pointer-events: none;
+    }
+    @keyframes holoSpin {
+      100% { transform: rotate(360deg); }
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cmd-trigger {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: transform 0.25s var(--spring-bounce), border-color 0.2s, background 0.2s;
+    }
+    .cmd-trigger:hover {
+      transform: translateY(-2px) scale(1.02);
+      border-color: var(--accent-cyan);
+      color: var(--text-main);
+      background: rgba(0, 242, 254, 0.08);
+    }
+    .kbd {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--accent-cyan);
+    }
+
+    /* ==========================================================================
+       3. BENTO BOX GRID SYSTEM + Z-AXIS ELEVATION + PROXIMITY RADIAL SPOTLIGHT
+       ========================================================================== */
+    .dashboard-shell {
+      max-width: 1560px;
+      margin: 22px auto 60px;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-auto-rows: minmax(140px, auto);
+      gap: 18px;
+    }
+
+    .bento-card {
+      position: relative;
+      border-radius: 22px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      padding: 22px;
+      overflow: hidden;
+      transition:
+        transform 0.4s var(--spring-bounce),
+        box-shadow 0.4s var(--ease-out-expo),
+        border-color 0.3s ease,
+        background 0.3s ease;
+      box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transform-style: preserve-3d;
+    }
+
+    /* Radial Mouse Spotlight Overlay */
+    .bento-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(
+        550px circle at var(--mouse-x, -500px) var(--mouse-y, -500px),
+        rgba(0, 242, 254, 0.13),
+        transparent 40%
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .bento-card:hover {
+      transform: translateY(-4px) translateZ(12px);
+      box-shadow: 0 26px 55px -12px rgba(0, 0, 0, 0.68), 0 0 25px rgba(0, 242, 254, 0.12);
+      border-color: rgba(0, 242, 254, 0.32);
+    }
+
+    /* ==========================================================================
+       4. NEO-BRUTALISM STATE (SEMANTIC P0 FAILURE / CHAOS MODE)
+       ========================================================================== */
+    .bento-card.neo-brutal-alert {
+      background: #14080e !important;
+      backdrop-filter: none !important;
+      border: 3px solid var(--brutal-yellow) !important;
+      border-radius: 8px !important;
+      box-shadow: 7px 7px 0px var(--accent-crimson) !important;
+      animation: brutalShake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+    .bento-card.neo-brutal-alert .brutal-tag {
+      display: inline-flex !important;
+    }
+    @keyframes brutalShake {
+      10%, 90% { transform: translate3d(-2px, 0, 0); }
+      20%, 80% { transform: translate3d(4px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, -2px, 0); }
+      40%, 60% { transform: translate3d(6px, 2px, 0); }
+    }
+
+    .brutal-tag {
+      display: none;
+      background: var(--brutal-yellow);
+      color: #000;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 900;
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border: 2px solid #000;
+      box-shadow: 3px 3px 0 #ff2a5f;
+      text-transform: uppercase;
+    }
+
+    /* ==========================================================================
+       5. SKELETON LOADING & SHIMMER PLACEHOLDER SYSTEM
+       ========================================================================== */
+    body.is-skeleton .skeleton-target {
+      position: relative;
+      color: transparent !important;
+      pointer-events: none;
+    }
+    body.is-skeleton .skeleton-target::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #161b2e 25%, #263052 50%, #161b2e 75%);
+      background-size: 200% 100%;
+      animation: shimmerWave 1.3s infinite linear;
+      z-index: 15;
+    }
+    @keyframes shimmerWave {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ==========================================================================
+       6. CARD SPANS & SPECIFIC MODULE STYLING
+       ========================================================================== */
+    .span-8 { grid-column: span 8; }
+    .span-4 { grid-column: span 4; }
+    .span-6 { grid-column: span 6; }
+    .span-12 { grid-column: span 12; }
+
+    @media (max-width: 1150px) {
+      .span-8, .span-4, .span-6 { grid-column: span 12; }
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      position: relative;
+      z-index: 2;
+    }
+    .card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ==========================================================================
+       7. ISOMETRIC 2.5D WEBFLOW ARCHITECTURE + SELF-HEALING TOPOLOGY
+       ========================================================================== */
+    .isometric-stage {
+      position: relative;
+      height: 340px;
+      width: 100%;
+      border-radius: 16px;
+      background: radial-gradient(circle at center, rgba(16, 24, 48, 0.8), rgba(6, 8, 16, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      overflow: hidden;
+      perspective: 1000px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .iso-plane {
+      width: 92%;
+      height: 86%;
+      position: relative;
+      transform: rotateX(52deg) rotateZ(-24deg);
+      transform-style: preserve-3d;
+      transition: transform 0.65s var(--spring-bounce);
+      background-image:
+        linear-gradient(rgba(0, 242, 254, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 242, 254, 0.12) 1px, transparent 1px);
+      background-size: 36px 36px;
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      box-shadow: -20px 25px 50px rgba(0, 0, 0, 0.75);
+    }
+
+    .isometric-stage:hover .iso-plane {
+      transform: rotateX(42deg) rotateZ(-14deg) scale(1.03);
+    }
+
+    /* 3D Elevated Webflow Nodes on Isometric Plane */
+    .wf-node {
+      position: absolute;
+      width: 135px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1.5px solid var(--accent-cyan);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      transform: translateZ(34px);
+      box-shadow: -12px 16px 24px rgba(0, 0, 0, 0.7), 0 0 15px rgba(0, 242, 254, 0.25);
+      cursor: pointer;
+      transition: all 0.35s var(--spring-bounce);
+    }
+    .wf-node:hover {
+      transform: translateZ(62px) scale(1.08);
+      border-color: #fff;
+      box-shadow: -20px 28px 32px rgba(0, 0, 0, 0.85), 0 0 25px var(--accent-cyan);
+    }
+    .wf-node.fault {
+      background: var(--brutal-yellow);
+      color: #000;
+      border: 3px solid #000;
+      box-shadow: -10px 12px 0px var(--accent-crimson);
+      transform: translateZ(54px);
+      font-weight: 800;
+    }
+    .wf-node.healed {
+      border-color: var(--accent-emerald);
+      box-shadow: -12px 16px 24px rgba(0, 0, 0, 0.7), 0 0 22px rgba(16, 185, 129, 0.55);
+    }
+    .wf-node-status {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.63rem;
+      margin-bottom: 4px;
+      opacity: 0.85;
+    }
+
+    /* SVG Connection Lines inside Isometric Plane */
+    .iso-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .flow-path {
+      fill: none;
+      stroke: rgba(0, 242, 254, 0.35);
+      stroke-width: 2.5;
+      stroke-dasharray: 7 7;
+      animation: dashFlow 1.2s linear infinite;
+    }
+    .flow-path.fault-line {
+      stroke: var(--accent-crimson);
+      stroke-width: 3.5;
+      animation-duration: 0.35s;
+    }
+    @keyframes dashFlow {
+      to { stroke-dashoffset: -28; }
+    }
+
+    /* ==========================================================================
+       8. SKEUOMORPHISM + NEUMORPHISM (HARDWARE-IN-THE-LOOP & CHAOS RACK)
+       ========================================================================== */
+    .hardware-rack {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 8px;
+    }
+
+    /* Neumorphic Extruded Socket */
+    .neu-socket {
+      border-radius: 16px;
+      background: linear-gradient(145deg, #0c0f1b, #14192d);
+      box-shadow:
+        6px 6px 14px #06070d,
+        -5px -5px 12px #1c233f,
+        inset 1px 1px 2px rgba(255, 255, 255, 0.05);
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .neu-socket-inset {
+      border-radius: 12px;
+      background: #0a0d17;
+      box-shadow:
+        inset 4px 4px 8px #05060b,
+        inset -3px -3px 7px #171e36;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Skeuomorphic Metallic Toggle Switch & LED */
+    .skeuo-led {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981, inset 0 1px 2px #fff;
+      transition: all 0.25s ease;
+    }
+    .skeuo-led.red {
+      background: #ff2a5f;
+      box-shadow: 0 0 12px #ff2a5f, inset 0 1px 2px #fff;
+    }
+
+    .skeuo-switch {
+      width: 52px;
+      height: 26px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #06080f 0%, #181e31 100%);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.85);
+      position: relative;
+      cursor: pointer;
+    }
+    .skeuo-knob {
+      position: absolute;
+      top: 2px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #f8fafc, #94a3b8 65%, #475569 100%);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.7), inset 0 1px 1px #fff;
+      transition: transform 0.32s var(--spring-bounce);
+    }
+    .skeuo-switch.active .skeuo-knob {
+      transform: translateX(24px);
+      background: radial-gradient(circle at 35% 30%, #ffffff, #00f2fe 70%, #0284c7 100%);
+    }
+
+    /* ==========================================================================
+       9. CLAYMORPHISM (INFLATED 3D AUTONOMOUS AI AGENTS)
+       ========================================================================== */
+    .clay-swarm {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .clay-agent {
+      padding: 13px 16px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, rgba(46, 56, 96, 0.9), rgba(24, 30, 54, 0.95));
+      box-shadow:
+        0 12px 24px rgba(0, 0, 0, 0.45),
+        inset 0 6px 10px rgba(255, 255, 255, 0.22),
+        inset 0 -6px 12px rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: transform 0.35s var(--spring-bounce), box-shadow 0.3s ease;
+    }
+    .clay-agent:hover {
+      transform: scale(1.03) translateY(-3px);
+    }
+    .clay-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: #fff;
+      box-shadow:
+        0 6px 12px rgba(0,0,0,0.35),
+        inset 0 4px 6px rgba(255,255,255,0.45),
+        inset 0 -4px 6px rgba(0,0,0,0.35);
+    }
+
+    /* ==========================================================================
+       10. SCROLLYTELLING / CHRONO-SCRUBBER FLIGHT RECORDER
+       ========================================================================== */
+    .chrono-bar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 18px;
+      border-radius: 16px;
+      background: rgba(8, 11, 20, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      margin-top: 12px;
+    }
+    .chrono-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent-emerald) 0%, var(--accent-cyan) 50%, var(--accent-crimson) 75%, var(--accent-violet) 100%);
+      outline: none;
+      cursor: pointer;
+    }
+    .chrono-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--accent-cyan);
+      box-shadow: 0 0 16px var(--accent-cyan);
+      cursor: grab;
+      transition: transform 0.2s var(--spring-bounce);
+    }
+    .chrono-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
+    }
+
+    /* ==========================================================================
+       11. SHARED ELEMENT TRANSITION MODAL (INSPECTOR OVERLAY)
+       ========================================================================== */
+    .shared-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 6, 12, 0.76);
+      backdrop-filter: blur(16px);
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .shared-modal-backdrop.open {
+      display: flex;
+      opacity: 1;
+    }
+    .shared-modal-card {
+      width: 100%;
+      max-width: 680px;
+      border-radius: 24px;
+      background: #0d1222;
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 242, 254, 0.15);
+      padding: 28px;
+      transform: scale(0.84) translateY(30px);
+      transition: transform 0.42s var(--spring-bounce);
+    }
+    .shared-modal-backdrop.open .shared-modal-card {
+      transform: scale(1) translateY(0);
+    }
+
+    /* ==========================================================================
+       12. ACTION BUTTONS & MICRO-INTERACTIONS
+       ========================================================================== */
+    .btn-action {
+      padding: 9px 15px;
+      border-radius: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.76rem;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.25s var(--spring-bounce), background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .btn-action:hover {
+      transform: translateY(-2px) scale(1.04);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 8px 20px rgba(0, 242, 254, 0.18);
+    }
+    .btn-action:active {
+      transform: scale(0.94);
+    }
+    .btn-action.primary {
+      background: linear-gradient(135deg, #00f2fe 0%, #4f46e5 100%);
+      color: #fff;
+      border: none;
+    }
+    .btn-action.danger {
+      background: rgba(255, 42, 95, 0.15);
+      border-color: var(--accent-crimson);
+      color: #ff6b8b;
+    }
+
+    .metric-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .metric-pill {
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    .metric-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.55rem;
+      font-weight: 800;
+    }
+
+    code.code-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.74rem;
+      background: rgba(0, 242, 254, 0.1);
+      color: var(--accent-cyan);
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SVG GOOEY LIQUID METABALL FILTER -->
+  <svg style="position: absolute; width: 0; height: 0;">
+    <defs>
+      <filter id="gooey-filter">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
+        <feColorMatrix in="blur" mode="matrix" values="
+          1 0 0 0 0
+          0 1 0 0 0
+          0 0 1 0 0
+          0 0 0 18 -7" result="goo" />
+        <feBlend in="SourceGraphic" in2="goo" />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- 1. PARALLAX AURORA & MESH GRADIENT LAYER -->
+  <div class="aurora-stage">
+    <div class="aurora-orb orb-1"></div>
+    <div class="aurora-orb orb-2"></div>
+    <div class="aurora-orb orb-3"></div>
+  </div>
+
+  <!-- 2. INTERACTIVE 3D WEBGL / PARTICLE TELEMETRY CANVAS -->
+  <canvas id="spatial-canvas"></canvas>
+
+  <!-- 3. STICKY TELEMETRY HEADER -->
+  <header class="topbar">
+    <div class="brand-cluster">
+      <div class="gooey-container" title="Liquid Metaball Shard Sync">
+        <div class="goo-ball"></div>
+        <div class="goo-ball"></div>
+      </div>
+      <div>
+        <div class="kinetic-logo" id="kinetic-title">AETHER-QA // NEXUS</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">
+          SEMANTIC MORPHO-TELEMETRY ENGINE v4.2 · @yogender-ai
+        </div>
+      </div>
+      <span class="badge-sla" title="Holographic Specular SLA Badge">99.998% SELF-HEALED SLA</span>
+    </div>
+
+    <div class="nav-controls">
+      <button class="btn-action" id="btn-skeleton" onclick="toggleSkeleton()">
+        <span>⚡ Shimmer Skeleton</span>
+      </button>
+      <button class="btn-action danger" id="btn-chaos" onclick="triggerChaosFault()">
+        <span>💥 Inject P0 Regression</span>
+      </button>
+      <button class="btn-action primary" id="btn-heal" onclick="triggerAISelfHeal()">
+        <span>🧬 AI Self-Heal AST</span>
+      </button>
+      <div class="cmd-trigger" onclick="openSharedModal('Command Palette & Architecture Inspector')">
+        <span>Search Webflow AST...</span>
+        <span class="kbd">⌘K</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 4. PRIMARY BENTO BOX DASHBOARD GRID -->
+  <main class="dashboard-shell" id="bento-grid">
+
+    <!-- MODULE A: ISOMETRIC 2.5D WEBFLOW ARCHITECTURE TOPOLOGY (SPAN 8) -->
+    <section class="bento-card span-8" id="card-topology">
+      <div class="card-header">
+        <div>
+          <div class="card-title">
+            <span>Isometric 2.5D Webflow AST & Live User Journey Topology</span>
+            <span class="brutal-tag">P0 SELECTOR FRACTURE</span>
+          </div>
+          <div class="card-subtitle">Click any 3D elevated DOM node for Shared-Element Inspection · Hover to tilt spatial plane</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <span class="code-chip" id="topology-status-chip">STATE: NOMINAL GLASS</span>
+        </div>
+      </div>
+
+      <div class="isometric-stage skeleton-target">
+        <div class="iso-plane" id="iso-plane">
+          <svg class="iso-svg" viewBox="0 0 700 320" preserveAspectRatio="none">
+            <path id="edge-1" class="flow-path" d="M 110 85 C 220 85, 230 160, 330 160" />
+            <path id="edge-2" class="flow-path" d="M 330 160 C 430 160, 450 85, 560 85" />
+            <path id="edge-3" class="flow-path" d="M 330 160 C 430 160, 450 245, 560 245" />
+          </svg>
+
+          <!-- Elevated 3D Nodes -->
+          <div class="wf-node" style="top: 42px; left: 36px;" onclick="openSharedModal('Edge Ingress // Auth OAuth2 Flow')">
+            <div class="wf-node-status"><span>/auth/sso</span><span style="color:#10b981">11ms</span></div>
+            <div style="font-weight:700;">1. Edge Auth Gate</div>
+            <div style="font-size:0.62rem; color:#94a3b8; margin-top:4px;">2,410 Virtual Users/s</div>
+          </div>
+
+          <div class="wf-node" id="node-checkout" style="top: 122px; left: 268px;" onclick="openSharedModal('Webflow DOM Node // #stripe-submit-btn')">
+            <div class="wf-node-status"><span>/checkout/pay</span><span id="checkout-latency" style="color:#00f2fe">24ms</span></div>
+            <div style="font-weight:700;" id="checkout-title">2. Payment Modal</div>
+            <div style="font-size:0.62rem; color:#94a3b8; margin-top:4px;" id="checkout-selector">data-testid="pay-cta"</div>
+          </div>
+
+          <div class="wf-node" style="top: 42px; left: 505px;" onclick="openSharedModal('GraphQL Billing Ledger Mutation')">
+            <div class="wf-node-status"><span>/api/v3/ledger</span><span style="color:#10b981">19ms</span></div>
+            <div style="font-weight:700;">3A. Ledger Commit</div>
+            <div style="font-size:0.62rem; color:#94a3b8; margin-top:4px;">Zero Flake · 100% Pass</div>
+          </div>
+
+          <div class="wf-node" style="top: 205px; left: 505px;" onclick="openSharedModal('WebGL Visual Regression Diff Engine')">
+            <div class="wf-node-status"><span>/render/canvas</span><span style="color:#a855f7">60fps</span></div>
+            <div style="font-weight:700;">3B. Pixel Diff GPU</div>
+            <div style="font-size:0.62rem; color:#94a3b8; margin-top:4px;">SSIM Score: 0.9994</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scrollytelling / Chrono Flight Recorder Bar -->
+      <div class="chrono-bar skeleton-target">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; min-width:165px;">
+          ⏱ FLIGHT RECORDER: <strong id="chrono-label" style="color:var(--accent-cyan)">T-00:00 (LIVE)</strong>
+        </div>
+        <input type="range" min="0" max="100" value="100" class="chrono-slider" id="chrono-slider" oninput="scrubTimeline(this.value)" />
+        <span style="font-size:0.72rem; color:var(--text-muted); font-family:'JetBrains Mono',monospace;">Scrub Timeline</span>
+      </div>
+    </section>
+
+    <!-- MODULE B: CLAYMORPHIC AUTONOMOUS AI SWARM (SPAN 4) -->
+    <section class="bento-card span-4">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Claymorphic AI Agent Swarm</div>
+          <div class="card-subtitle">Tactile 3D matte autonomous test healers</div>
+        </div>
+        <span class="code-chip">3 ACTIVE</span>
+      </div>
+
+      <div class="clay-swarm skeleton-target">
+        <div class="clay-agent" onclick="triggerAISelfHeal()">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="clay-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">🧬</div>
+            <div>
+              <div style="font-weight:700; font-size:0.9rem;">AST-Healer-01</div>
+              <div style="font-size:0.73rem; color:var(--text-muted);">Auto-patches broken CSS/XPath</div>
+            </div>
+          </div>
+          <span class="code-chip" id="agent-1-state">READY</span>
+        </div>
+
+        <div class="clay-agent" onclick="burstParticles(window.innerWidth*0.75, window.innerHeight*0.35, '#00f2fe')">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="clay-avatar" style="background: linear-gradient(135deg, #00f2fe, #2563eb);">👁️</div>
+            <div>
+              <div style="font-weight:700; font-size:0.9rem;">Perceptual-Diff-ViT</div>
+              <div style="font-size:0.73rem; color:var(--text-muted);">Vision Transformer layout guard</div>
+            </div>
+          </div>
+          <span class="code-chip">99.9% ACC</span>
+        </div>
+
+        <div class="clay-agent" onclick="triggerChaosFault()">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div class="clay-avatar" style="background: linear-gradient(135deg, #f43f5e, #9f1239);">🔥</div>
+            <div>
+              <div style="font-weight:700; font-size:0.9rem;">Fuzz-Chaos-Monkey</div>
+              <div style="font-size:0.73rem; color:var(--text-muted);">Injects network jitter & 502s</div>
+            </div>
+          </div>
+          <span class="code-chip" style="color:#ff6b8b">ARMED</span>
+        </div>
+      </div>
+
+      <div class="metric-row skeleton-target" style="grid-template-columns: 1fr 1fr; margin-top: 16px;">
+        <div class="metric-pill">
+          <div style="font-size:0.7rem; color:var(--text-muted);">FLAKY TESTS KILLED</div>
+          <div class="metric-val" id="metric-healed" style="color:var(--accent-emerald)">1,482</div>
+        </div>
+        <div class="metric-pill">
+          <div style="font-size:0.7rem; color:var(--text-muted);">MTTR (SELF-HEAL)</div>
+          <div class="metric-val" id="metric-mttr" style="color:var(--accent-cyan)">340ms</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODULE C: SKEUOMORPHIC + NEUMORPHIC HARDWARE DEVICE LAB (SPAN 6) -->
+    <section class="bento-card span-6">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Neumorphic & Skeuomorphic Device Farm Rack</div>
+          <div class="card-subtitle">Physical tactile hardware switches + Web Audio synth feedback</div>
+        </div>
+        <span class="code-chip">REAL METAL</span>
+      </div>
+
+      <div class="hardware-rack skeleton-target">
+        <div class="neu-socket">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:0.76rem; font-weight:700;">RACK-01 // iOS 19 WEBKIT</span>
+            <div class="skeuo-led" id="led-1"></div>
+          </div>
+          <div class="neu-socket-inset">
+            <span style="font-size:0.74rem; color:var(--text-muted);">60Hz GPU Frame Lock</span>
+            <div class="skeuo-switch active" onclick="toggleHardwareSwitch(this, 'led-1')">
+              <div class="skeuo-knob"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="neu-socket">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:0.76rem; font-weight:700;">RACK-02 // CHROMIUM AVX512</span>
+            <div class="skeuo-led" id="led-2"></div>
+          </div>
+          <div class="neu-socket-inset">
+            <span style="font-size:0.74rem; color:var(--text-muted);">DOM Mutation Shadowing</span>
+            <div class="skeuo-switch active" onclick="toggleHardwareSwitch(this, 'led-2')">
+              <div class="skeuo-knob"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="neu-socket">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:0.76rem; font-weight:700;">RACK-03 // PACKET THROTTLE</span>
+            <div class="skeuo-led red" id="led-3"></div>
+          </div>
+          <div class="neu-socket-inset">
+            <span style="font-size:0.74rem; color:var(--text-muted);">Simulate 3G Packet Loss</span>
+            <div class="skeuo-switch" onclick="toggleHardwareSwitch(this, 'led-3')">
+              <div class="skeuo-knob"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="neu-socket">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:0.76rem; font-weight:700;">RACK-04 // BRUTAL CONTRAST</span>
+            <div class="skeuo-led" id="led-4"></div>
+          </div>
+          <div class="neu-socket-inset">
+            <span style="font-size:0.74rem; color:var(--text-muted);">Toggle Light/Dark Paper</span>
+            <div class="skeuo-switch" onclick="toggleThemeMode(this, 'led-4')">
+              <div class="skeuo-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODULE D: LIVE TELEMETRY MATRIX & SELF-HEALING AST DIFF (SPAN 6) -->
+    <section class="bento-card span-6" id="card-ast">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Live AST Self-Healing Patch Stream</div>
+          <div class="card-subtitle">Real-time selector repair & kinetic typography telemetry</div>
+        </div>
+        <span class="code-chip" id="ast-badge">ZERO REGRESSIONS</span>
+      </div>
+
+      <div class="skeleton-target" style="background:rgba(5,7,14,0.82); border-radius:14px; padding:14px; border:1px solid rgba(255,255,255,0.08); font-family:'JetBrains Mono',monospace; font-size:0.76rem; line-height:1.6;">
+        <div id="ast-log-line-1" style="color:#94a3b8;">[12:30:02.14] <span style="color:#00f2fe">WATCHER</span> Listening to Webflow DOM AST mutations on <code class="code-chip">main#c94f1a</code></div>
+        <div id="ast-log-line-2" style="color:#10b981;">[12:30:04.88] <span style="color:#10b981">PASS</span> 1,240 E2E assertions verified across 32 edge shards (p99: 18ms)</div>
+        <div id="ast-log-line-3" style="color:#a855f7;">[12:30:05.00] <span style="color:#a855f7">AI-AGENT</span> Embedding cosine similarity locked at 0.998 for #pay-cta</div>
+      </div>
+
+      <div class="metric-row skeleton-target">
+        <div class="metric-pill">
+          <div style="font-size:0.68rem; color:var(--text-muted);">SYNTHETIC RPS</div>
+          <div class="metric-val" id="val-rps">14.2k</div>
+        </div>
+        <div class="metric-pill">
+          <div style="font-size:0.68rem; color:var(--text-muted);">VISUAL DRIFT</div>
+          <div class="metric-val" id="val-drift" style="color:var(--accent-cyan)">0.01%</div>
+        </div>
+        <div class="metric-pill">
+          <div style="font-size:0.68rem; color:var(--text-muted);">BROWSER SHARDS</div>
+          <div class="metric-val">128</div>
+        </div>
+        <div class="metric-pill">
+          <div style="font-size:0.68rem; color:var(--text-muted);">UI PARADIGM</div>
+          <div class="metric-val" id="val-paradigm" style="font-size:1.05rem; color:var(--accent-emerald)">GLASS</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 5. SHARED ELEMENT TRANSITION MODAL -->
+  <div class="shared-modal-backdrop" id="shared-modal" onclick="closeSharedModal(event)">
+    <div class="shared-modal-card" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 id="modal-title" style="font-family:'Syne',sans-serif; font-size:1.3rem;">Node Inspector</h3>
+        <button class="btn-action" onclick="closeSharedModal()">ESC ✕</button>
+      </div>
+      <p style="font-size:0.86rem; color:var(--text-muted); line-height:1.6; margin-bottom:16px;">
+        Shared-Element Transition Inspector active. In <strong>AETHER-QA</strong>, every Webflow DOM node is indexed as a multi-dimensional vector (Visual Bounding Box + Accessibility Role + AST Path). If a developer renames a class in Webflow, the Claymorphic AI Healer recomputes cosine similarity and patches the Playwright test in real time without failing CI/CD.
+      </p>
+      <div style="background:#060811; padding:14px; border-radius:12px; border:1px solid rgba(0,242,254,0.2); font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#00f2fe;">
+        - Old Selector: button.wf-checkout-v1<br/>
+        + Healed Vector: getByRole('button', { name: /Complete Order/i }) [Confidence: 99.7%]
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       1. WEB AUDIO API PROCEDURAL MICRO-INTERACTION SYNTHESIZER
+       ========================================================================== */
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playTone(freq = 520, type = 'sine', duration = 0.08, gainVal = 0.06) {
+      try {
+        if (!audioCtx) audioCtx = new AudioCtx();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    /* ==========================================================================
+       2. PROXIMITY RADIAL SPOTLIGHT + PARALLAX + KINETIC VARIABLE FONT
+       ========================================================================== */
+    const cards = document.querySelectorAll('.bento-card');
+    const kineticTitle = document.getElementById('kinetic-title');
+
+    window.addEventListener('mousemove', (e) => {
+      // Radial border spotlight per card
+      cards.forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+        card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+      });
+
+      // Parallax background shift
+      const px = (e.clientX / window.innerWidth - 0.5) * 40;
+      const py = (e.clientY / window.innerHeight - 0.5) * 40;
+      document.documentElement.style.setProperty('--parallax-x', `${px}px`);
+      document.documentElement.style.setProperty('--parallax-y', `${py}px`);
+
+      // Variable Font Kinetic Weight based on X velocity
+      const weight = Math.min(800, Math.max(400, Math.round(400 + (e.clientX / window.innerWidth) * 400)));
+      document.documentElement.style.setProperty('--font-weight-kinetic', weight);
+    });
+
+    /* ==========================================================================
+       3. REAL-TIME CANVAS PARTICLE & SPATIAL TELEMETRY ENGINE
+       ========================================================================== */
+    const canvas = document.getElementById('spatial-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < 55; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.7,
+        vy: (Math.random() - 0.5) * 0.7,
+        r: Math.random() * 2 + 0.8,
+        color: i % 3 === 0 ? '#00f2fe' : i % 2 === 0 ? '#8b5cf6' : '#10b981',
+        alpha: Math.random() * 0.55 + 0.2
+      });
+    }
+
+    function burstParticles(x, y, color = '#10b981') {
+      playTone(680, 'triangle', 0.14, 0.08);
+      for (let i = 0; i < 28; i++) {
+        const angle = (Math.PI * 2 * i) / 28;
+        const speed = Math.random() * 5 + 2;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          r: Math.random() * 3 + 1.5,
+          color,
+          alpha: 1,
+          decay: 0.022
+        });
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.decay) {
+          p.alpha -= p.decay;
+          if (p.alpha <= 0) {
+            particles.splice(i, 1);
+            continue;
+          }
+        } else {
+          if (p.x < 0) p.x = canvas.width;
+          if (p.x > canvas.width) p.x = 0;
+          if (p.y < 0) p.y = canvas.height;
+          if (p.y > canvas.height) p.y = 0;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fill();
+      }
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    /* ==========================================================================
+       4. SEMANTIC MORPHO-TELEMETRY STATE MUTATIONS (GLASS <-> NEO-BRUTALISM)
+       ========================================================================== */
+    function triggerChaosFault() {
+      playTone(150, 'sawtooth', 0.28, 0.12);
+      const topoCard = document.getElementById('card-topology');
+      const astCard = document.getElementById('card-ast');
+      const nodeCheckout = document.getElementById('node-checkout');
+      const edge1 = document.getElementById('edge-1');
+
+      topoCard.classList.add('neo-brutal-alert');
+      astCard.classList.add('neo-brutal-alert');
+      nodeCheckout.classList.remove('healed');
+      nodeCheckout.classList.add('fault');
+      edge1.classList.add('fault-line');
+
+      document.getElementById('topology-status-chip').textContent = 'STATE: NEO-BRUTAL P0 ALERT';
+      document.getElementById('checkout-latency').textContent = '502 ERR';
+      document.getElementById('checkout-selector').textContent = 'BROKEN: #pay-cta-missing';
+      document.getElementById('val-paradigm').textContent = 'BRUTAL';
+      document.getElementById('val-paradigm').style.color = '#ffe600';
+      document.getElementById('val-drift').textContent = '14.8%';
+      document.getElementById('val-drift').style.color = '#ff2a5f';
+      document.getElementById('ast-badge').textContent = '1 P0 FRACTURE';
+      document.getElementById('ast-log-line-2').innerHTML =
+        `[12:30:11.04] <span style="color:#ff2a5f;font-weight:800;">P0 FAULT</span> Selector <code class="code-chip">#pay-cta</code> missing after Webflow deploy! UI morphed to Neo-Brutalism.`;
+      burstParticles(window.innerWidth * 0.4, window.innerHeight * 0.45, '#ff2a5f');
+    }
+
+    function triggerAISelfHeal() {
+      playTone(587.33, 'sine', 0.12, 0.08);
+      setTimeout(() => playTone(880, 'sine', 0.22, 0.09), 110);
+
+      const topoCard = document.getElementById('card-topology');
+      const astCard = document.getElementById('card-ast');
+      const nodeCheckout = document.getElementById('node-checkout');
+      const edge1 = document.getElementById('edge-1');
+
+      topoCard.classList.remove('neo-brutal-alert');
+      astCard.classList.remove('neo-brutal-alert');
+      nodeCheckout.classList.remove('fault');
+      nodeCheckout.classList.add('healed');
+      edge1.classList.remove('fault-line');
+
+      document.getElementById('topology-status-chip').textContent = 'STATE: AI SELF-HEALED GLASS';
+      document.getElementById('checkout-latency').textContent = '16ms';
+      document.getElementById('checkout-selector').textContent = 'HEALED: role="button"[Pay]';
+      document.getElementById('val-paradigm').textContent = 'HEALED';
+      document.getElementById('val-paradigm').style.color = '#10b981';
+      document.getElementById('val-drift').textContent = '0.00%';
+      document.getElementById('val-drift').style.color = '#10b981';
+      document.getElementById('ast-badge').textContent = 'AUTO-PATCHED PR #409';
+      document.getElementById('ast-log-line-2').innerHTML =
+        `[12:30:14.29] <span style="color:#10b981;font-weight:800;">SELF-HEALED</span> AST-Healer-01 patched selector via semantic vector similarity (0.997).`;
+
+      const healedCount = document.getElementById('metric-healed');
+      healedCount.textContent = (parseInt(healedCount.textContent.replace(',', '')) + 1).toLocaleString();
+      burstParticles(window.innerWidth * 0.45, window.innerHeight * 0.42, '#10b981');
+    }
+
+    /* ==========================================================================
+       5. SKELETON SHIMMER, HARDWARE SWITCHES, SCROLLYTELLING & SHARED MODAL
+       ========================================================================== */
+    function toggleSkeleton() {
+      playTone(420, 'triangle', 0.09, 0.06);
+      document.body.classList.toggle('is-skeleton');
+    }
+
+    function toggleHardwareSwitch(el, ledId) {
+      el.classList.toggle('active');
+      const led = document.getElementById(ledId);
+      const isActive = el.classList.contains('active');
+      playTone(isActive ? 740 : 280, 'square', 0.06, 0.05);
+      led.classList.toggle('red', !isActive);
+    }
+
+    function toggleThemeMode(el, ledId) {
+      toggleHardwareSwitch(el, ledId);
+      document.body.classList.toggle('theme-brutal-light');
+    }
+
+    function scrubTimeline(val) {
+      const label = document.getElementById('chrono-label');
+      const v = parseInt(val, 10);
+      if (v < 25) {
+        label.textContent = `T-04:10 (BOOT SHIMMER)`;
+        document.body.classList.add('is-skeleton');
+      } else if (v >= 25 && v < 65) {
+        document.body.classList.remove('is-skeleton');
+        label.textContent = `T-01:45 (P0 REGRESSION)`;
+        triggerChaosFault();
+      } else {
+        document.body.classList.remove('is-skeleton');
+        label.textContent = `T-00:00 (AI SELF-HEALED)`;
+        triggerAISelfHeal();
+      }
+    }
+
+    function openSharedModal(title) {
+      playTone(640, 'sine', 0.1, 0.07);
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('shared-modal').classList.add('open');
+    }
+
+    function closeSharedModal() {
+      playTone(340, 'sine', 0.08, 0.05);
+      document.getElementById('shared-modal').classList.remove('open');
+    }
+
+    // Keyboard shortcut Cmd+K / Ctrl+K & Escape
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        openSharedModal('Command Palette // Webflow AST Vector Search');
+      }
+      if (e.key === 'Escape') closeSharedModal();
+    });
+  </script>
+</body>
+</html>
